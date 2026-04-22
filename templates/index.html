@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BHCI Voters Sheet Converter</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 2.5rem 2.5rem 2rem;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a2a3a;
+      margin-bottom: 0.3rem;
+    }
+
+    .subtitle {
+      font-size: 0.88rem;
+      color: #6b7c93;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.4rem;
+    }
+
+    .field { margin-bottom: 1.4rem; }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #d1d5db;
+      border-radius: 7px;
+      font-size: 0.95rem;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: #4f6ef7; }
+
+    .drop-zone {
+      border: 2px dashed #c3cfe2;
+      border-radius: 9px;
+      padding: 1.6rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: #f8fafc;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: #4f6ef7; background: #eef1ff; }
+    .drop-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+    }
+    .drop-icon { font-size: 2rem; color: #94a3b8; margin-bottom: 0.4rem; }
+    .drop-text { font-size: 0.9rem; color: #6b7c93; }
+    .drop-text span { color: #4f6ef7; font-weight: 600; }
+    .file-chosen { font-size: 0.82rem; color: #374151; margin-top: 0.5rem; font-style: italic; }
+
+    .domain-hint {
+      font-size: 0.78rem;
+      color: #94a3b8;
+      margin-top: 0.35rem;
+      line-height: 1.5;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 0.75rem;
+      background: #4f6ef7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.4rem;
+    }
+    button[type="submit"]:hover { background: #3a56d4; }
+    button[type="submit"]:active { transform: scale(0.98); }
+    button[type="submit"]:disabled { background: #a5b4fc; cursor: not-allowed; }
+
+    #status {
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      border-radius: 7px;
+      padding: 0.6rem 0.9rem;
+      display: none;
+    }
+    #status.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fca5a5; }
+    #status.success { background: #f0fdf4; color: #15803d; border: 1px solid #86efac; }
+    #status.loading { background: #eff6ff; color: #1d4ed8; border: 1px solid #93c5fd; }
+
+    .btn-home {
+      display: none;
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.65rem;
+      background: #f1f5f9;
+      color: #374151;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-home:hover { background: #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>BHCI Voters Sheet Converter</h1>
+    <p class="subtitle">Upload a BHCI Excel file, choose a domain, and download the converted Voters sheet.</p>
+
+    <form id="convertForm">
+      <div class="field">
+        <label for="fileInput">Excel File (.xlsx)</label>
+        <div class="drop-zone" id="dropZone">
+          <div class="drop-icon">📂</div>
+          <div class="drop-text">Drag &amp; drop or <span>browse</span></div>
+          <input type="file" id="fileInput" name="file" accept=".xlsx,.xls" required />
+        </div>
+        <div class="file-chosen" id="fileChosen">No file selected</div>
+      </div>
+
+      <div class="field">
+        <label for="domainInput">Domain Name</label>
+        <input
+          type="text"
+          id="domainInput"
+          name="domain"
+          placeholder="e.g. Racial Justice, Equity, and Inclusion"
+          required
+          autocomplete="off"
+        />
+        <div class="domain-hint">
+          Accepted values (case &amp; spaces don't matter):<br>
+          D1 Strong Minds and Strong Bodies &nbsp;·&nbsp; D2 Positive Self-Worth<br>
+          D3 Caring Families and Relationships &nbsp;·&nbsp; D4 Safety<br>
+          D5 Vibrant Communities &nbsp;·&nbsp; D6 Healthy Environments<br>
+          D7 Racial Justice, Equity, and Inclusion &nbsp;·&nbsp; D8 Fun and Happiness
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn">Convert &amp; Download</button>
+    </form>
+
+    <div id="status"></div>
+    <button class="btn-home" id="homeBtn" type="button">&#8592; Convert Another File</button>
+  </div>
+
+  <script>
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileChosen = document.getElementById('fileChosen');
+    const form = document.getElementById('convertForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const status = document.getElementById('status');
+    const homeBtn = document.getElementById('homeBtn');
+
+    fileInput.addEventListener('change', () => {
+      fileChosen.textContent = fileInput.files[0] ? fileInput.files[0].name : 'No file selected';
+    });
+
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('over');
+      const files = e.dataTransfer.files;
+      if (files.length) {
+        fileInput.files = files;
+        fileChosen.textContent = files[0].name;
+      }
+    });
+
+    function showStatus(msg, type) {
+      status.textContent = msg;
+      status.className = type;
+      status.style.display = 'block';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      showStatus('Converting…', 'loading');
+      submitBtn.disabled = true;
+
+      const formData = new FormData(form);
+      try {
+        const resp = await fetch('/convert', { method: 'POST', body: formData });
+        if (!resp.ok) {
+          const err = await resp.json();
+          showStatus('Error: ' + err.error, 'error');
+          return;
+        }
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'Voters_converted.xlsx';
+        a.click();
+        URL.revokeObjectURL(url);
+        showStatus('Done! Your file is downloading.', 'success');
+        homeBtn.style.display = 'block';
+      } catch (err) {
+        showStatus('Unexpected error: ' + err.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+    homeBtn.addEventListener('click', () => {
+      form.reset();
+      fileChosen.textContent = 'No file selected';
+      status.style.display = 'none';
+      status.className = '';
+      homeBtn.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
